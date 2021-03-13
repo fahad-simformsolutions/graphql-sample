@@ -1,25 +1,32 @@
-import React from 'react';
-import {LogBox} from 'react-native';
+import React, { useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Drawer from './DrawerNavigator';
 import CenterSpinner from '../screens/components/Util/CenterSpinner';
-
-LogBox.ignoreAllLogs(true);
+import {ApolloProvider} from 'react-apollo';
+import makeApolloClient from '../apollo';
 
 const Main = () => {
+  const [client, setClient] = useState(null);
 
   const fetchSession = async () => {
     // fetch session
     const session = await AsyncStorage.getItem('@todo-graphql:session');
-    const sessionObj = JSON.parse(session);
-    const { token, id } = sessionObj;
+    const { token, id } = JSON.parse(session);
+    const apolloClient = makeApolloClient(token);
+    setClient(apolloClient);
   }
 
   React.useEffect(() => {
     fetchSession();
-  }, [])
+  }, []);
 
-  return <Drawer />
+  if (!client) return <CenterSpinner />;
+
+  return (
+    <ApolloProvider client={client}>
+      <Drawer />
+    </ApolloProvider>
+  );
 }
 
 export default Main;
